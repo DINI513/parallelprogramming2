@@ -5,12 +5,13 @@
 #include <thread>
 #include <mutex>
 #include <iostream>
+#include <ctime>
 
-const int massCount = 1000001;
+const int massCount = 50000001;
 const int threadCount = 4;
-
+using namespace std;
 double massMax;
-std::mutex locker;
+mutex locker;
 
 void Calculator(double *mass, int numThread, double *result)
 {
@@ -20,12 +21,15 @@ void Calculator(double *mass, int numThread, double *result)
 	for (int i = column; i < massCount; i += threadCount)
 	{
 		result[column] += mass[i];
-		locker.lock();
-		if (massMax < mass[i])
-		{
-			massMax = mass[i];
+		if (massMax < mass[i]) {
+			locker.lock();
+			if (massMax < mass[i])
+			{
+				massMax = mass[i];
+			}
+
+			locker.unlock();
 		}
-		locker.unlock();
 	}
 	printf_s("Thread #%i stopped\n", numThread);
 }
@@ -36,12 +40,13 @@ int main()
 	double *massSumm = new double[threadCount];
 	for (int i = 0; i < massCount; ++i)
 	{
-		mass[i] = (rand() % 100 + 1) / (float)(rand() % 100 + 1);
+		mass[i] = (rand() % 100 + 1) / (float)(rand() % 100 + 1); 
 	}
-	std::thread *massThreads = new std::thread[threadCount];
+	thread *massThreads = new thread[threadCount];
+	long int start = clock();
 	for (int i = 0; i < threadCount; i++)
 	{
-		massThreads[i] = std::thread(Calculator, mass, i + 1, massSumm);
+		massThreads[i] = thread(Calculator, mass, i + 1, massSumm);
 	}
 	for (int i = 0; i < threadCount; i++)
 	{
@@ -52,8 +57,10 @@ int main()
 	{
 		summ += massSumm[i];
 	}
+	long int end = clock();
 	printf_s("Summ %f \n", summ);
 	printf_s("Max %f \n", massMax);
+	printf_s("Time %f sec\n", (end - start) / (float)CLOCKS_PER_SEC);
 	system("pause");
 	return 0;
 }
